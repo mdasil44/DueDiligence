@@ -12,7 +12,4 @@ yrs = 5
 startDate = datetime.now() - timedelta(days=yrs*365)
 currDate = datetime.now()
 
-stock = get_historical_data("XOM", start=startDate, end=currDate, close_only=True, output_format='pandas').close
-
-plt.plot(stock.index,stock.values)
-plt.show()
+stock = get_historical_data("XOM", start=startDate, end=currDate, output_format='pandas')

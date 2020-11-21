@@ -30,41 +30,41 @@ yrs = 5
 startDate = datetime.now() - timedelta(days=yrs*365)
 currDate = datetime.now()
 
-stock = get_historical_data("XOM", start=startDate, end=currDate, output_format='pandas')
-print(stock)
+stock = get_historical_data("AAPL", start=startDate, end=currDate, output_format='pandas')
 #plt.plot(stock.index, stock.values)
 #plt.show()
+x = pd.to_datetime(stock.index).astype(np.int64)
 
+Xtrain, Xtest, ytrain, ytest = train_test_split(x.values.reshape(-1, 1), stock.close.values, test_size = 0.25 , random_state = 0)
 
-Xtrain, Xtest, ytrain, ytest = train_test_split(stock.index, stock.close.values, test_size = 0.25 , random_state = 0)
+# Training 3 types of models using the stonk values
 
-#  will train 3 models using the stonk class
-#Regressor using ridge model
-
+# Regressor using ridge model
 RidgeModel = Pipeline([
-     ('standardize', StandardScaler()),
-     ('reg', LinearRegression())
- ])
+    ('standardize', StandardScaler(with_mean=True, with_std=True)),
+    ('poly', PolynomialFeatures(10, include_bias=0)),
+    ('reg', Ridge(alpha=0.5, fit_intercept=True))
+])
 RidgeR2Cross = cross_val_score(RidgeModel, Xtrain, ytrain, cv=10, scoring='r2')
-print('RidgeModel: ', RidgeR2Cross.mean())
+print(f"RidgeModel: {RidgeR2Cross.mean()}")
 
-# #Regressor using RandomForest
-RF2 = RandomForestRegressor(n_estimators = 500, max_features = 3) #default max features is sqrt(vars)
+# Regressor using RandomForest
+RF2 = RandomForestRegressor(n_estimators = 500, max_features = 1) #default max features is sqrt(vars)
 RF2.fit(Xtrain, ytrain)
 RandomForestAccuracy = RF2.score(Xtest, ytest)
-print(f" Random Forest Accuracy: {RandomForestAccuracy}")
-#
-#Regressor using XGBoost tree
+print(f"Random Forest Accuracy: {RandomForestAccuracy}")
+
+# Regressor using XGBoost tree
 XGBoost = XGBRegressor(max_depth = 3, learning_rate = 0.1, n_estimators = 500, booster = 'gbtree', gamma=0.001)
 XGBoost.fit(Xtrain, ytrain)
 XGBoostAccuracy = XGBoost.score(Xtest, ytest)
 print(f"XGBoostAcc: {XGBoostAccuracy}")
 
-ridge = RidgeModel.fit(Xtrain,ytrain)
-y_pred = ridge.predict(stock.index)
+ridge = RidgeModel.fit(Xtrain, ytrain)
+y_pred = ridge.predict(x.values.reshape(-1, 1))
 y_true = stock.close.values
-plt.plot(stock.index, y_pred, 'r-')
-plt.plot(stock.index,y_true)
+plt.plot(stock.index, y_pred, 'r')
+plt.plot(stock.index, y_true)
 plt.show()
 
 
